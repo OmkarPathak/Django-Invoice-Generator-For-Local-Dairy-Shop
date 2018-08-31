@@ -1,0 +1,7 @@
+Django==2.1
+django-crispy-forms==1.7.2
+et-xmlfile==1.0.1
+jdcal==1.4
+openpyxl==2.5.5
+pytz==2018.5
+XlsxWriter==1.0.7

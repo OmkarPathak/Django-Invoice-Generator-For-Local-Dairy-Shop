@@ -1,0 +1,667 @@
+from django.shortcuts import render, redirect
+from .models import Upload, UploadForm
+from django.contrib import messages
+from openpyxl import load_workbook
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from xlsxwriter.workbook import Workbook
+from django.conf import settings
+import os, datetime
+
+today = datetime.datetime.now()
+
+def upload(request):
+    if request.method == 'POST':
+        form = UploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            request.session.clear()
+            messages.success(request, 'File uploaded!')
+            wb = load_workbook(request.FILES.get('excel_file'), data_only=True)
+            # print(wb.sheetnames)
+            excel_data = list()
+            # # iterating over the rows and
+            # # getting value from each cell in row
+            for row in wb['Sheet1'].iter_rows():
+                row_data = list()
+                for cell in row:
+                    row_data.append(str(cell.value))
+                excel_data.append(row_data)
+                
+            request.session['excel_data'] = excel_data[1:]
+            return redirect('upload')
+    else:
+        form = UploadForm()
+        if request.session.get('excel_data'):
+            excel_data = request.session.get('excel_data')
+            for i in range(len(excel_data)):
+                excel_data[i] = excel_data[i][0:2] + excel_data[i][33:39]
+            # request.session.clear()
+            page = request.GET.get('page', 1)
+
+            # paginate the data
+            paginator = Paginator(excel_data, 50)
+            try:
+                excel_data = paginator.page(page)
+            except PageNotAnInteger:
+                excel_data = paginator.page(1)
+            except EmptyPage:
+                excel_data = paginator.page(paginator.num_pages)
+
+            return render(request, 'upload.html', {'form': form, 'excel_data': excel_data})
+    return render(request, 'upload.html', {'form': form})
+
+def generate(request):
+    excel_data = request.session.get('excel_data')
+
+    g_rate      = excel_data[0][40]
+    m_rate      = excel_data[0][41]
+    dahi_rate   = excel_data[0][42]
+    ghee_rate   = excel_data[0][43]
+
+    for i in range(len(excel_data)):
+        excel_data[i] = excel_data[i][0:2] + excel_data[i][33:39]
+
+    file_name = today.strftime('%B') + '_' + today.strftime('%Y')
+    try:
+        os.makedirs(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/')))
+    except FileExistsError:
+        pass
+    book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
+    sheet = book.add_worksheet('Sheet1')
+
+    for col in range(1000):
+        sheet.set_column(col, col, 6)
+        sheet.set_row(col, 25)
+
+    merge_format = book.add_format({
+        'bold': 3,
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_size': 12
+    })
+
+    sign = book.add_format({
+        'bold': 3,
+        'border': 1,
+        'align': 'right',
+        'valign': 'vcenter',
+        'font_size': 12
+    })
+    
+    heading = book.add_format({
+        'bold': 1,
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_size': 12
+    })
+
+    data = book.add_format({
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_size': 10
+    })
+
+    border = book.add_format({'border': 1})
+    
+    row = 0
+    col = 0
+    
+    for i in range(0, len(excel_data), 6):
+        print(excel_data[i])
+
+        sr_no       = excel_data[i][0]
+        name        = excel_data[i][1]
+
+        # A1:B1
+        sheet.merge_range(
+            'A' + str(row + 1) + ':B' + str(row + 1), 
+            'सीनियर क्र: ' + str(sr_no), 
+            data
+        )
+
+        # E1:F1
+        sheet.merge_range(
+            'E' + str(row + 1) + ':F' + str(row + 1), 
+            'फोन: 65005933', 
+            data
+        )
+
+        # C1:D1
+        sheet.merge_range(
+            'C' + str(row + 1) + ':D' + str(row + 1), 
+            '', 
+            merge_format)
+
+        # A2:F2
+        sheet.merge_range(
+            'A' + str(row + 2) + ':F' + str(row + 2), 
+            'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
+            data)
+
+        sheet.set_row(1, 30)
+
+        # A3:F3
+        sheet.merge_range(
+            'A' + str(row + 3) + ':F' + str(row + 3), 
+            '', 
+            merge_format)
+
+        # A5:C5
+        sheet.merge_range(
+            'A' + str(row + 5) + ':C' + str(row + 5), 
+            'तपशील', 
+            heading
+        )
+
+        # D5
+        sheet.write(
+            'D'  + str(row + 5), 
+            'प्रमाण', 
+            heading
+        )
+
+        # E5
+        sheet.write(
+            'E' + str(row + 5) , 
+            'दर', 
+            heading
+        )
+
+        # F5
+        sheet.write(
+            'F' + str(row + 5), 
+            'रक्कम', 
+            heading
+        )
+
+        # A4:C4
+        sheet.merge_range(
+            'A' + str(row + 4) + ':C' + str(row + 4), 
+            name, 
+            merge_format)
+
+        # D4:F4
+        sheet.merge_range(
+            'D' + str(row + 4) + ':F' + str(row + 4), 
+            'तारीख: ' + today.strftime('%d/%m/%Y'), 
+            data)
+
+        quantity    = excel_data[i][2]
+        dahi        = excel_data[i][3]
+        ghee        = excel_data[i][4]
+        milk_type   = excel_data[i][5]
+        amount      = excel_data[i][6]
+        total       = excel_data[i][7]
+
+        quantity1   = excel_data[i + 1][2]
+        milk_type1  = excel_data[i + 1][5]
+        amount1     = excel_data[i + 1][6]
+        
+        # A6:C6
+        sheet.merge_range(
+            'A' + str(row + 6) + ':C' + str(row + 6), 
+            'म्हशींचे दूध', 
+            data
+        )
+        if milk_type == 'M':
+            sheet.write('D' + str(row + 6), quantity, data)
+            sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
+            sheet.write('F' + str(row + 6), amount, data)
+        elif milk_type1 == 'M':
+            sheet.write('D' + str(row + 6), quantity1, data)
+            sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
+            sheet.write('F' + str(row + 6), amount1, data)
+        else:
+            sheet.write_blank('D' + str(row + 6), '', data)
+            sheet.write_blank('E' + str(row + 6), '', data)
+            sheet.write_blank('F' + str(row + 6), '', data)
+
+        # A7:C7
+        sheet.merge_range(
+            'A' + str(row + 7) + ':C' + str(row + 7), 
+            'गायीचे दूध', 
+            data
+        )
+        if milk_type == 'G':
+            sheet.write('D'  + str(row + 7), quantity, data)
+            sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
+            sheet.write('F' + str(row + 7), amount, data)
+        elif milk_type1 == 'G':
+            sheet.write('D' + str(row + 7), quantity1, data)
+            sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
+            sheet.write('F' + str(row + 7), amount1, data)
+        else:
+            sheet.write_blank('D'  + str(row + 7), '', data)
+            sheet.write_blank('E' + str(row + 7), '', data)
+            sheet.write_blank('F' + str(row + 7), '', data)
+
+        # A8:C8
+        sheet.merge_range(
+            'A' + str(row + 8) + ':C' + str(row + 8), 
+            'दही', 
+            data
+        )
+
+        # D8
+        sheet.write_blank('D' + str(row + 8), '', data)
+
+        # E8
+        sheet.write('E' + str(row + 8), str(dahi_rate) + '/Kg', data)
+
+        # F8
+        sheet.write('F' + str(row + 8), dahi, data)
+
+        # A9:C9
+        sheet.merge_range(
+            'A' + str(row + 9) + ':C' + str(row + 9), 
+            'तूप', 
+            data
+        )
+
+        # D9
+        sheet.write_blank('D' + str(row + 9), '', data)
+
+        # E9
+        sheet.write('E' + str(row + 9), str(ghee_rate) + '/Kg', data)
+
+        # F9
+        sheet.write('F' + str(row + 9), ghee, data)
+        # sheet.merge_range('A9:C9', 'मागील शिल्लक', data)
+
+        # A10:C10
+        sheet.merge_range(
+            'A' + str(row + 10) + ':C' + str(row + 10), 
+            'एकूण', 
+            data
+        )
+        
+        # D10
+        sheet.write_blank('D' + str(row + 10), '', data)
+
+        # E10
+        sheet.write_blank('E' + str(row + 10), '', data)
+
+        # F10
+        sheet.write('F' + str(row + 10), round(float(total), 2), data)
+
+        # A11:F12
+        sheet.merge_range(
+            'A' + str(row + 11) + ':F' + str(row + 12), 
+            'प्राप्तकर्त्याची स्वाक्षरी', 
+            sign
+        )
+
+        try:
+            #############################################################
+            sr_no       = excel_data[i + 2][0]
+            name        = excel_data[i + 2][1]
+
+            # G1:H1
+            sheet.merge_range(
+                'G' + str(row + 1) + ':H' + str(row + 1), 
+                'सीनियर क्र: ' + str(sr_no), 
+                data
+            )
+
+            # K1:L1
+            sheet.merge_range(
+                'K' + str(row + 1) + ':L' + str(row + 1), 
+                'फोन: 65005933', 
+                data
+            )
+
+            # I1:J1
+            sheet.merge_range(
+                'I' + str(row + 1) + ':J' + str(row + 1), 
+                '', 
+                merge_format)
+
+            # G2:L2
+            sheet.merge_range(
+                'G' + str(row + 2) + ':L' + str(row + 2), 
+                'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
+                data)
+
+            # G3:L3
+            sheet.merge_range(
+                'G' + str(row + 3) + ':L' + str(row + 3), 
+                '', 
+                merge_format)
+
+            # G5:I5
+            sheet.merge_range(
+                'G' + str(row + 5) + ':I' + str(row + 5), 
+                'तपशील', 
+                heading
+            )
+
+            # J5
+            sheet.write(
+                'J'  + str(row + 5), 
+                'प्रमाण', 
+                heading
+            )
+
+            # K5
+            sheet.write(
+                'K' + str(row + 5) , 
+                'दर', 
+                heading
+            )
+
+            # L5
+            sheet.write(
+                'L' + str(row + 5), 
+                'रक्कम', 
+                heading
+            )
+
+            # G4:I4
+            sheet.merge_range(
+                'G' + str(row + 4) + ':I' + str(row + 4), 
+                name, 
+                merge_format)
+
+            # J4:L4
+            sheet.merge_range(
+                'J' + str(row + 4) + ':L' + str(row + 4), 
+                'तारीख: ' + today.strftime('%d/%m/%Y'), 
+                data)
+
+            quantity    = excel_data[i + 2][2]
+            dahi        = excel_data[i + 2][3]
+            ghee        = excel_data[i + 2][4]
+            milk_type   = excel_data[i + 2][5]
+            amount      = excel_data[i + 2][6]
+            total       = excel_data[i + 2][7]
+
+            quantity1   = excel_data[i + 3][2]
+            milk_type1  = excel_data[i + 3][5]
+            amount1     = excel_data[i + 3][6]
+            
+            # G6:I6
+            sheet.merge_range(
+                'G' + str(row + 6) + ':I' + str(row + 6), 
+                'म्हशींचे दूध', 
+                data
+            )
+            if milk_type == 'M':
+                sheet.write('J' + str(row + 6), quantity, data)
+                sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
+                sheet.write('L' + str(row + 6), amount, data)
+            elif milk_type1 == 'M':
+                sheet.write('J' + str(row + 6), quantity1, data)
+                sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
+                sheet.write('L' + str(row + 6), amount1, data)
+            else:
+                sheet.write_blank('J' + str(row + 6), '', data)
+                sheet.write_blank('K' + str(row + 6), '', data)
+                sheet.write_blank('L' + str(row + 6), '', data)
+
+            # G7:I7
+            sheet.merge_range(
+                'G' + str(row + 7) + ':I' + str(row + 7), 
+                'गायीचे दूध', 
+                data
+            )
+            if milk_type == 'G':
+                sheet.write('J'  + str(row + 7), quantity, data)
+                sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
+                sheet.write('L' + str(row + 7), amount, data)
+            elif milk_type1 == 'G':
+                sheet.write('J' + str(row + 7), quantity1, data)
+                sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
+                sheet.write('L' + str(row + 7), amount1, data)
+            else:
+                sheet.write_blank('J'  + str(row + 7), '', data)
+                sheet.write_blank('K' + str(row + 7), '', data)
+                sheet.write_blank('L' + str(row + 7), '', data)
+
+            # G8:I8
+            sheet.merge_range(
+                'G' + str(row + 8) + ':I' + str(row + 8), 
+                'दही', 
+                data
+            )
+
+            # J8
+            sheet.write_blank('J' + str(row + 8), '', data)
+
+            # K8
+            sheet.write('K' + str(row + 8), str(dahi_rate) + '/Kg', data)
+
+            # L8
+            sheet.write('L' + str(row + 8), dahi, data)
+
+            # G9:I9
+            sheet.merge_range(
+                'G' + str(row + 9) + ':I' + str(row + 9), 
+                'तूप', 
+                data
+            )
+
+            # J9
+            sheet.write_blank('J' + str(row + 9), '', data)
+
+            # K9
+            sheet.write('K' + str(row + 9), str(ghee_rate) + '/Kg', data)
+
+            # L9
+            sheet.write('L' + str(row + 9), ghee, data)
+            # sheet.merge_range('A9:C9', 'मागील शिल्लक', data)
+
+            # G10:I10
+            sheet.merge_range(
+                'G' + str(row + 10) + ':I' + str(row + 10), 
+                'एकूण', 
+                data
+            )
+            
+            # J10
+            sheet.write_blank('J' + str(row + 10), '', data)
+
+            # K10
+            sheet.write_blank('K' + str(row + 10), '', data)
+
+            # L10
+            sheet.write('L' + str(row + 10), round(float(total), 2), data)
+
+            # G11:L12
+            sheet.merge_range(
+                'G' + str(row + 11) + ':L' + str(row + 12), 
+                'प्राप्तकर्त्याची स्वाक्षरी', 
+                sign
+            )
+
+            ###########################################################
+
+            sr_no       = excel_data[i + 4][0]
+            name        = excel_data[i + 4][1]
+
+            # M1:N1
+            sheet.merge_range(
+                'M' + str(row + 1) + ':N' + str(row + 1), 
+                'सीनियर क्र: ' + str(sr_no), 
+                data
+            )
+
+            # Q1:R1
+            sheet.merge_range(
+                'Q' + str(row + 1) + ':R' + str(row + 1), 
+                'फोन: 65005933', 
+                data
+            )
+
+            # O1:P1
+            sheet.merge_range(
+                'O' + str(row + 1) + ':P' + str(row + 1), 
+                '', 
+                merge_format)
+
+            # M2:R2
+            sheet.merge_range(
+                'M' + str(row + 2) + ':R' + str(row + 2), 
+                'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
+                data)
+
+            # M3:R3
+            sheet.merge_range(
+                'M' + str(row + 3) + ':R' + str(row + 3), 
+                '', 
+                merge_format)
+
+            # M5:O5
+            sheet.merge_range(
+                'M' + str(row + 5) + ':O' + str(row + 5), 
+                'तपशील', 
+                heading
+            )
+
+            # P5
+            sheet.write(
+                'P'  + str(row + 5), 
+                'प्रमाण', 
+                heading
+            )
+
+            # Q5
+            sheet.write(
+                'Q' + str(row + 5) , 
+                'दर', 
+                heading
+            )
+
+            # R5
+            sheet.write(
+                'R' + str(row + 5), 
+                'रक्कम', 
+                heading
+            )
+
+            # M4:O4
+            sheet.merge_range(
+                'M' + str(row + 4) + ':O' + str(row + 4), 
+                name, 
+                merge_format)
+
+            # P4:R4
+            sheet.merge_range(
+                'P' + str(row + 4) + ':R' + str(row + 4), 
+                'तारीख: ' + today.strftime('%d/%m/%Y'), 
+                data)
+
+            quantity    = excel_data[i + 4][2]
+            dahi        = excel_data[i + 4][3]
+            ghee        = excel_data[i + 4][4]
+            milk_type   = excel_data[i + 4][5]
+            amount      = excel_data[i + 4][6]
+            total       = excel_data[i + 4][7]
+
+            quantity1   = excel_data[i + 5][2]
+            milk_type1  = excel_data[i + 5][5]
+            amount1     = excel_data[i + 5][6]
+            
+            # M6:O6
+            sheet.merge_range(
+                'M' + str(row + 6) + ':O' + str(row + 6), 
+                'म्हशींचे दूध', 
+                data
+            )
+            if milk_type == 'M':
+                sheet.write('P' + str(row + 6), quantity, data)
+                sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
+                sheet.write('R' + str(row + 6), amount, data)
+            elif milk_type1 == 'M':
+                sheet.write('P' + str(row + 6), quantity1, data)
+                sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
+                sheet.write('R' + str(row + 6), amount1, data)
+            else:
+                sheet.write_blank('P' + str(row + 6), '', data)
+                sheet.write_blank('Q' + str(row + 6), '', data)
+                sheet.write_blank('R' + str(row + 6), '', data)
+
+            # M7:O7
+            sheet.merge_range(
+                'M' + str(row + 7) + ':O' + str(row + 7), 
+                'गायीचे दूध', 
+                data
+            )
+            if milk_type == 'G':
+                sheet.write('P'  + str(row + 7), quantity, data)
+                sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
+                sheet.write('R' + str(row + 7), amount, data)
+            elif milk_type1 == 'G':
+                sheet.write('P' + str(row + 7), quantity1, data)
+                sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
+                sheet.write('R' + str(row + 7), amount1, data)
+            else:
+                sheet.write_blank('P'  + str(row + 7), '', data)
+                sheet.write_blank('Q' + str(row + 7), '', data)
+                sheet.write_blank('R' + str(row + 7), '', data)
+
+            # M8:O8
+            sheet.merge_range(
+                'M' + str(row + 8) + ':O' + str(row + 8), 
+                'दही', 
+                data
+            )
+
+            # P8
+            sheet.write_blank('P' + str(row + 8), '', data)
+
+            # Q8
+            sheet.write('Q' + str(row + 8), str(dahi_rate) + '/Kg', data)
+
+            # R8
+            sheet.write('R' + str(row + 8), dahi, data)
+
+            # M9:O9
+            sheet.merge_range(
+                'M' + str(row + 9) + ':O' + str(row + 9), 
+                'तूप', 
+                data
+            )
+
+            # P9
+            sheet.write_blank('P' + str(row + 9), '', data)
+
+            # Q9
+            sheet.write('Q' + str(row + 9), str(ghee_rate) + '/Kg', data)
+
+            # R9
+            sheet.write('R' + str(row + 9), ghee, data)
+            # sheet.merge_range('A9:C9', 'मागील शिल्लक', data)
+
+            # M10:O10
+            sheet.merge_range(
+                'M' + str(row + 10) + ':O' + str(row + 10), 
+                'एकूण', 
+                data
+            )
+            
+            # P10
+            sheet.write_blank('P' + str(row + 10), '', data)
+
+            # Q10
+            sheet.write_blank('Q' + str(row + 10), '', data)
+
+            # R10
+            sheet.write('R' + str(row + 10), round(float(total), 2), data)
+
+            # M11:R12
+            sheet.merge_range(
+                'M' + str(row + 11) + ':R' + str(row + 12), 
+                'प्राप्तकर्त्याची स्वाक्षरी', 
+                sign
+            )
+
+            row += 12
+        except IndexError:
+            break
+        
+    messages.info(request, 'File generated successfully')
+    request.session.clear()
+    return redirect('upload')
