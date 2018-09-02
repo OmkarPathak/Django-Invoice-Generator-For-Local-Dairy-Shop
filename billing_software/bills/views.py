@@ -6,6 +6,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from xlsxwriter.workbook import Workbook
 from django.conf import settings
 import os, datetime
+import random, string
+from pathlib import Path
+
+def get_random_text():
+    return ''.join(random.sample(string.ascii_letters, 6))
 
 today = datetime.datetime.now()
 
@@ -34,7 +39,7 @@ def upload(request):
         if request.session.get('excel_data'):
             excel_data = request.session.get('excel_data')
             for i in range(len(excel_data)):
-                excel_data[i] = excel_data[i][0:2] + excel_data[i][33:39]
+                excel_data[i] = excel_data[i][0:2] + excel_data[i][33:40]
             # request.session.clear()
             page = request.GET.get('page', 1)
 
@@ -53,24 +58,36 @@ def upload(request):
 def generate(request):
     excel_data = request.session.get('excel_data')
 
-    g_rate      = excel_data[0][40]
-    m_rate      = excel_data[0][41]
-    dahi_rate   = excel_data[0][42]
-    ghee_rate   = excel_data[0][43]
+    g_rate      = excel_data[0][41]
+    m_rate      = excel_data[0][42]
+    dahi_rate   = excel_data[0][43]
+    ghee_rate   = excel_data[0][44]
+    bill_for    = excel_data[0][45]
+    bill_gen    = excel_data[0][46]
 
     for i in range(len(excel_data)):
-        excel_data[i] = excel_data[i][0:2] + excel_data[i][33:39]
+        excel_data[i] = excel_data[i][0:2] + excel_data[i][33:40]
 
     file_name = today.strftime('%B') + '_' + today.strftime('%Y')
+    
+    # Check if the dir already exists
     try:
         os.makedirs(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/')))
     except FileExistsError:
         pass
-    book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
-    sheet = book.add_worksheet('Sheet1')
+
+    check_file = Path(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
+
+    # check if file already exists
+    if check_file.exists():
+        book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '_' + get_random_text() + '.xlsx'))
+        sheet = book.add_worksheet('Sheet1')
+    else:
+        book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
+        sheet = book.add_worksheet('Sheet1')
 
     for col in range(1000):
-        sheet.set_column(col, col, 6)
+        sheet.set_column(col, col, 8)
         sheet.set_row(col, 25)
 
     merge_format = book.add_format({
@@ -118,14 +135,14 @@ def generate(request):
         # A1:B1
         sheet.merge_range(
             'A' + str(row + 1) + ':B' + str(row + 1), 
-            'सीनियर क्र: ' + str(sr_no), 
+            'क्र: ' + str(sr_no), 
             data
         )
 
         # E1:F1
         sheet.merge_range(
             'E' + str(row + 1) + ':F' + str(row + 1), 
-            'फोन: 65005933', 
+            'फोन: 9371079745', 
             data
         )
 
@@ -138,15 +155,15 @@ def generate(request):
         # A2:F2
         sheet.merge_range(
             'A' + str(row + 2) + ':F' + str(row + 2), 
-            'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
-            data)
+            'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
+            heading)
 
         sheet.set_row(1, 30)
 
         # A3:F3
         sheet.merge_range(
             'A' + str(row + 3) + ':F' + str(row + 3), 
-            '', 
+            name, 
             merge_format)
 
         # A5:C5
@@ -180,21 +197,22 @@ def generate(request):
         # A4:C4
         sheet.merge_range(
             'A' + str(row + 4) + ':C' + str(row + 4), 
-            name, 
+            datetime.datetime.strptime(bill_for, "%Y-%m-%d %H:%M:%S").strftime("%B-%Y"), 
             merge_format)
 
         # D4:F4
         sheet.merge_range(
             'D' + str(row + 4) + ':F' + str(row + 4), 
-            'तारीख: ' + today.strftime('%d/%m/%Y'), 
+            'तारीख: ' + str(datetime.datetime.strptime(bill_gen, "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y")), 
             data)
 
-        quantity    = excel_data[i][2]
-        dahi        = excel_data[i][3]
-        ghee        = excel_data[i][4]
-        milk_type   = excel_data[i][5]
-        amount      = excel_data[i][6]
-        total       = excel_data[i][7]
+        quantity        = excel_data[i][2]
+        dahi            = excel_data[i][3]
+        ghee            = excel_data[i][4]
+        milk_type       = excel_data[i][5]
+        amount          = excel_data[i][6]
+        previous_blnc   = excel_data[i][7]
+        total           = excel_data[i][8]
 
         quantity1   = excel_data[i + 1][2]
         milk_type1  = excel_data[i + 1][5]
@@ -209,11 +227,11 @@ def generate(request):
         if milk_type == 'M':
             sheet.write('D' + str(row + 6), quantity, data)
             sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
-            sheet.write('F' + str(row + 6), amount, data)
+            sheet.write('F' + str(row + 6), round(float(amount), 2), data)
         elif milk_type1 == 'M':
             sheet.write('D' + str(row + 6), quantity1, data)
             sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
-            sheet.write('F' + str(row + 6), amount1, data)
+            sheet.write('F' + str(row + 6), round(float(amount1), 2), data)
         else:
             sheet.write_blank('D' + str(row + 6), '', data)
             sheet.write_blank('E' + str(row + 6), '', data)
@@ -228,11 +246,11 @@ def generate(request):
         if milk_type == 'G':
             sheet.write('D'  + str(row + 7), quantity, data)
             sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
-            sheet.write('F' + str(row + 7), amount, data)
+            sheet.write('F' + str(row + 7), round(float(amount), 2), data)
         elif milk_type1 == 'G':
             sheet.write('D' + str(row + 7), quantity1, data)
             sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
-            sheet.write('F' + str(row + 7), amount1, data)
+            sheet.write('F' + str(row + 7), round(float(amount1), 2), data)
         else:
             sheet.write_blank('D'  + str(row + 7), '', data)
             sheet.write_blank('E' + str(row + 7), '', data)
@@ -270,10 +288,17 @@ def generate(request):
         # F9
         sheet.write('F' + str(row + 9), ghee, data)
         # sheet.merge_range('A9:C9', 'मागील शिल्लक', data)
-
+        
         # A10:C10
         sheet.merge_range(
             'A' + str(row + 10) + ':C' + str(row + 10), 
+            'मागील बाकी', 
+            data
+        )
+
+        # A10:C10
+        sheet.merge_range(
+            'A' + str(row + 11) + ':C' + str(row + 11), 
             'एकूण', 
             data
         )
@@ -285,11 +310,14 @@ def generate(request):
         sheet.write_blank('E' + str(row + 10), '', data)
 
         # F10
-        sheet.write('F' + str(row + 10), round(float(total), 2), data)
+        sheet.write('F' + str(row + 10), previous_blnc, data)
+
+        # F11
+        sheet.write('F' + str(row + 11), round(float(total), 2), data)
 
         # A11:F12
         sheet.merge_range(
-            'A' + str(row + 11) + ':F' + str(row + 12), 
+            'A' + str(row + 12) + ':F' + str(row + 13), 
             'प्राप्तकर्त्याची स्वाक्षरी', 
             sign
         )
@@ -302,14 +330,14 @@ def generate(request):
             # G1:H1
             sheet.merge_range(
                 'G' + str(row + 1) + ':H' + str(row + 1), 
-                'सीनियर क्र: ' + str(sr_no), 
+                'क्र: ' + str(sr_no), 
                 data
             )
 
             # K1:L1
             sheet.merge_range(
                 'K' + str(row + 1) + ':L' + str(row + 1), 
-                'फोन: 65005933', 
+                'फोन: 9371079745', 
                 data
             )
 
@@ -322,13 +350,13 @@ def generate(request):
             # G2:L2
             sheet.merge_range(
                 'G' + str(row + 2) + ':L' + str(row + 2), 
-                'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
-                data)
+                'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
+                heading)
 
             # G3:L3
             sheet.merge_range(
                 'G' + str(row + 3) + ':L' + str(row + 3), 
-                '', 
+                name, 
                 merge_format)
 
             # G5:I5
@@ -362,21 +390,22 @@ def generate(request):
             # G4:I4
             sheet.merge_range(
                 'G' + str(row + 4) + ':I' + str(row + 4), 
-                name, 
+                datetime.datetime.strptime(bill_for, "%Y-%m-%d %H:%M:%S").strftime("%B-%Y"), 
                 merge_format)
 
             # J4:L4
             sheet.merge_range(
                 'J' + str(row + 4) + ':L' + str(row + 4), 
-                'तारीख: ' + today.strftime('%d/%m/%Y'), 
+                'तारीख: ' + str(datetime.datetime.strptime(bill_gen, "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y")), 
                 data)
 
-            quantity    = excel_data[i + 2][2]
-            dahi        = excel_data[i + 2][3]
-            ghee        = excel_data[i + 2][4]
-            milk_type   = excel_data[i + 2][5]
-            amount      = excel_data[i + 2][6]
-            total       = excel_data[i + 2][7]
+            quantity        = excel_data[i + 2][2]
+            dahi            = excel_data[i + 2][3]
+            ghee            = excel_data[i + 2][4]
+            milk_type       = excel_data[i + 2][5]
+            amount          = excel_data[i + 2][6]
+            previous_blnc   = excel_data[i + 2][7]
+            total           = excel_data[i + 2][8]
 
             quantity1   = excel_data[i + 3][2]
             milk_type1  = excel_data[i + 3][5]
@@ -391,11 +420,11 @@ def generate(request):
             if milk_type == 'M':
                 sheet.write('J' + str(row + 6), quantity, data)
                 sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
-                sheet.write('L' + str(row + 6), amount, data)
+                sheet.write('L' + str(row + 6), round(float(amount), 2), data)
             elif milk_type1 == 'M':
                 sheet.write('J' + str(row + 6), quantity1, data)
                 sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
-                sheet.write('L' + str(row + 6), amount1, data)
+                sheet.write('L' + str(row + 6), round(float(amount1), 2), data)
             else:
                 sheet.write_blank('J' + str(row + 6), '', data)
                 sheet.write_blank('K' + str(row + 6), '', data)
@@ -410,11 +439,11 @@ def generate(request):
             if milk_type == 'G':
                 sheet.write('J'  + str(row + 7), quantity, data)
                 sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
-                sheet.write('L' + str(row + 7), amount, data)
+                sheet.write('L' + str(row + 7), round(float(amount), 2), data)
             elif milk_type1 == 'G':
                 sheet.write('J' + str(row + 7), quantity1, data)
                 sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
-                sheet.write('L' + str(row + 7), amount1, data)
+                sheet.write('L' + str(row + 7), round(float(amount1), 2), data)
             else:
                 sheet.write_blank('J'  + str(row + 7), '', data)
                 sheet.write_blank('K' + str(row + 7), '', data)
@@ -456,6 +485,13 @@ def generate(request):
             # G10:I10
             sheet.merge_range(
                 'G' + str(row + 10) + ':I' + str(row + 10), 
+                'मागील बाकी', 
+                data
+            )
+
+            # G11:I11
+            sheet.merge_range(
+                'G' + str(row + 11) + ':I' + str(row + 11), 
                 'एकूण', 
                 data
             )
@@ -467,11 +503,14 @@ def generate(request):
             sheet.write_blank('K' + str(row + 10), '', data)
 
             # L10
-            sheet.write('L' + str(row + 10), round(float(total), 2), data)
+            sheet.write('L' + str(row + 10), previous_blnc, data)
+
+            # L11
+            sheet.write('L' + str(row + 11), round(float(total), 2), data)
 
             # G11:L12
             sheet.merge_range(
-                'G' + str(row + 11) + ':L' + str(row + 12), 
+                'G' + str(row + 12) + ':L' + str(row + 13), 
                 'प्राप्तकर्त्याची स्वाक्षरी', 
                 sign
             )
@@ -484,14 +523,14 @@ def generate(request):
             # M1:N1
             sheet.merge_range(
                 'M' + str(row + 1) + ':N' + str(row + 1), 
-                'सीनियर क्र: ' + str(sr_no), 
+                'क्र: ' + str(sr_no), 
                 data
             )
 
             # Q1:R1
             sheet.merge_range(
                 'Q' + str(row + 1) + ':R' + str(row + 1), 
-                'फोन: 65005933', 
+                'फोन: 9371079745', 
                 data
             )
 
@@ -504,13 +543,13 @@ def generate(request):
             # M2:R2
             sheet.merge_range(
                 'M' + str(row + 2) + ':R' + str(row + 2), 
-                'मातृच्छाया दुग्धालय\n 201, कास्बा पेठ, पुणे-411051', 
-                data)
+                'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
+                heading)
 
             # M3:R3
             sheet.merge_range(
                 'M' + str(row + 3) + ':R' + str(row + 3), 
-                '', 
+                name, 
                 merge_format)
 
             # M5:O5
@@ -544,21 +583,22 @@ def generate(request):
             # M4:O4
             sheet.merge_range(
                 'M' + str(row + 4) + ':O' + str(row + 4), 
-                name, 
+                datetime.datetime.strptime(bill_for, "%Y-%m-%d %H:%M:%S").strftime("%B-%Y"), 
                 merge_format)
 
             # P4:R4
             sheet.merge_range(
                 'P' + str(row + 4) + ':R' + str(row + 4), 
-                'तारीख: ' + today.strftime('%d/%m/%Y'), 
+                'तारीख: ' + str(datetime.datetime.strptime(bill_gen, "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y")), 
                 data)
 
-            quantity    = excel_data[i + 4][2]
-            dahi        = excel_data[i + 4][3]
-            ghee        = excel_data[i + 4][4]
-            milk_type   = excel_data[i + 4][5]
-            amount      = excel_data[i + 4][6]
-            total       = excel_data[i + 4][7]
+            quantity        = excel_data[i + 4][2]
+            dahi            = excel_data[i + 4][3]
+            ghee            = excel_data[i + 4][4]
+            milk_type       = excel_data[i + 4][5]
+            amount          = excel_data[i + 4][6]
+            previous_blnc   = excel_data[i + 4][7]
+            total           = excel_data[i + 4][8]
 
             quantity1   = excel_data[i + 5][2]
             milk_type1  = excel_data[i + 5][5]
@@ -573,11 +613,11 @@ def generate(request):
             if milk_type == 'M':
                 sheet.write('P' + str(row + 6), quantity, data)
                 sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
-                sheet.write('R' + str(row + 6), amount, data)
+                sheet.write('R' + str(row + 6), round(float(amount), 2), data)
             elif milk_type1 == 'M':
                 sheet.write('P' + str(row + 6), quantity1, data)
                 sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
-                sheet.write('R' + str(row + 6), amount1, data)
+                sheet.write('R' + str(row + 6), round(float(amount1), 2), data)
             else:
                 sheet.write_blank('P' + str(row + 6), '', data)
                 sheet.write_blank('Q' + str(row + 6), '', data)
@@ -592,11 +632,11 @@ def generate(request):
             if milk_type == 'G':
                 sheet.write('P'  + str(row + 7), quantity, data)
                 sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
-                sheet.write('R' + str(row + 7), amount, data)
+                sheet.write('R' + str(row + 7), round(float(amount), 2), data)
             elif milk_type1 == 'G':
                 sheet.write('P' + str(row + 7), quantity1, data)
                 sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
-                sheet.write('R' + str(row + 7), amount1, data)
+                sheet.write('R' + str(row + 7), round(float(amount1), 2), data)
             else:
                 sheet.write_blank('P'  + str(row + 7), '', data)
                 sheet.write_blank('Q' + str(row + 7), '', data)
@@ -638,6 +678,13 @@ def generate(request):
             # M10:O10
             sheet.merge_range(
                 'M' + str(row + 10) + ':O' + str(row + 10), 
+                'मागील बाकी', 
+                data
+            )
+
+            # M11:O11
+            sheet.merge_range(
+                'M' + str(row + 11) + ':O' + str(row + 11), 
                 'एकूण', 
                 data
             )
@@ -649,16 +696,19 @@ def generate(request):
             sheet.write_blank('Q' + str(row + 10), '', data)
 
             # R10
-            sheet.write('R' + str(row + 10), round(float(total), 2), data)
+            sheet.write('R' + str(row + 10), previous_blnc, data)
+
+            # R11
+            sheet.write('R' + str(row + 11), round(float(total), 2), data)
 
             # M11:R12
             sheet.merge_range(
-                'M' + str(row + 11) + ':R' + str(row + 12), 
+                'M' + str(row + 12) + ':R' + str(row + 13), 
                 'प्राप्तकर्त्याची स्वाक्षरी', 
                 sign
             )
 
-            row += 12
+            row += 13
         except IndexError:
             break
         
