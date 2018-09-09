@@ -225,11 +225,11 @@ def generate(request):
             data
         )
         if milk_type == 'M':
-            sheet.write('D' + str(row + 6), quantity, data)
+            sheet.write('D' + str(row + 6), round(float(quantity), 2), data)
             sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
             sheet.write('F' + str(row + 6), round(float(amount), 2), data)
         elif milk_type1 == 'M':
-            sheet.write('D' + str(row + 6), quantity1, data)
+            sheet.write('D' + str(row + 6), round(float(quantity1), 2), data)
             sheet.write('E' + str(row + 6), str(m_rate) + '/Ltr', data)
             sheet.write('F' + str(row + 6), round(float(amount1), 2), data)
         else:
@@ -244,11 +244,11 @@ def generate(request):
             data
         )
         if milk_type == 'G':
-            sheet.write('D'  + str(row + 7), quantity, data)
+            sheet.write('D'  + str(row + 7), round(float(quantity), 2), data)
             sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
             sheet.write('F' + str(row + 7), round(float(amount), 2), data)
         elif milk_type1 == 'G':
-            sheet.write('D' + str(row + 7), quantity1, data)
+            sheet.write('D' + str(row + 7), round(float(quantity1), 2), data)
             sheet.write('E' + str(row + 7), str(g_rate) + '/Ltr', data)
             sheet.write('F' + str(row + 7), round(float(amount1), 2), data)
         else:
@@ -418,11 +418,11 @@ def generate(request):
                 data
             )
             if milk_type == 'M':
-                sheet.write('J' + str(row + 6), quantity, data)
+                sheet.write('J' + str(row + 6), round(float(quantity), 2), data)
                 sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
                 sheet.write('L' + str(row + 6), round(float(amount), 2), data)
             elif milk_type1 == 'M':
-                sheet.write('J' + str(row + 6), quantity1, data)
+                sheet.write('J' + str(row + 6), round(float(quantity1), 2), data)
                 sheet.write('K' + str(row + 6), str(m_rate) + '/Ltr', data)
                 sheet.write('L' + str(row + 6), round(float(amount1), 2), data)
             else:
@@ -437,11 +437,11 @@ def generate(request):
                 data
             )
             if milk_type == 'G':
-                sheet.write('J'  + str(row + 7), quantity, data)
+                sheet.write('J'  + str(row + 7), round(float(quantity), 2), data)
                 sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
                 sheet.write('L' + str(row + 7), round(float(amount), 2), data)
             elif milk_type1 == 'G':
-                sheet.write('J' + str(row + 7), quantity1, data)
+                sheet.write('J' + str(row + 7), round(float(quantity1), 2), data)
                 sheet.write('K' + str(row + 7), str(g_rate) + '/Ltr', data)
                 sheet.write('L' + str(row + 7), round(float(amount1), 2), data)
             else:
@@ -611,11 +611,11 @@ def generate(request):
                 data
             )
             if milk_type == 'M':
-                sheet.write('P' + str(row + 6), quantity, data)
+                sheet.write('P' + str(row + 6), round(float(quantity), 2), data)
                 sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
                 sheet.write('R' + str(row + 6), round(float(amount), 2), data)
             elif milk_type1 == 'M':
-                sheet.write('P' + str(row + 6), quantity1, data)
+                sheet.write('P' + str(row + 6), round(float(quantity1), 2), data)
                 sheet.write('Q' + str(row + 6), str(m_rate) + '/Ltr', data)
                 sheet.write('R' + str(row + 6), round(float(amount1), 2), data)
             else:
@@ -630,11 +630,11 @@ def generate(request):
                 data
             )
             if milk_type == 'G':
-                sheet.write('P'  + str(row + 7), quantity, data)
+                sheet.write('P'  + str(row + 7), round(float(quantity), 2), data)
                 sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
                 sheet.write('R' + str(row + 7), round(float(amount), 2), data)
             elif milk_type1 == 'G':
-                sheet.write('P' + str(row + 7), quantity1, data)
+                sheet.write('P' + str(row + 7), round(float(quantity1), 2), data)
                 sheet.write('Q' + str(row + 7), str(g_rate) + '/Ltr', data)
                 sheet.write('R' + str(row + 7), round(float(amount1), 2), data)
             else:
