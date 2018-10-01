@@ -98,6 +98,19 @@ def generate(request):
         'font_size': 12
     })
 
+    custom_font = book.add_format({
+        'bold': 3,
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_size': 12
+    })
+
+    try:
+        custom_font.set_font_name('Shivaji01')
+    except KeyError:
+        custom_font.set_font_name('Arial')
+        
     sign = book.add_format({
         'bold': 3,
         'border': 1,
@@ -164,7 +177,7 @@ def generate(request):
         sheet.merge_range(
             'A' + str(row + 3) + ':F' + str(row + 3), 
             name, 
-            merge_format)
+            custom_font)
 
         # A5:C5
         sheet.merge_range(
@@ -357,7 +370,7 @@ def generate(request):
             sheet.merge_range(
                 'G' + str(row + 3) + ':L' + str(row + 3), 
                 name, 
-                merge_format)
+                custom_font)
 
             # G5:I5
             sheet.merge_range(
@@ -550,7 +563,7 @@ def generate(request):
             sheet.merge_range(
                 'M' + str(row + 3) + ':R' + str(row + 3), 
                 name, 
-                merge_format)
+                custom_font)
 
             # M5:O5
             sheet.merge_range(
