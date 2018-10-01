@@ -28,8 +28,11 @@ def upload(request):
             # # getting value from each cell in row
             for row in wb['Sheet1'].iter_rows():
                 row_data = list()
+                if not row[0].value and row[3].value is None:
+                    continue
                 for cell in row:
                     row_data.append(str(cell.value))
+
                 excel_data.append(row_data)
                 
             request.session['excel_data'] = excel_data[1:]
