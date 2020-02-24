@@ -28,9 +28,11 @@ def upload(request):
             # # getting value from each cell in row
             for row in wb['Sheet1'].iter_rows():
                 row_data = list()
-                if not row[0].value and row[3].value is None:
+                print(row)
+                if not row[0].value and row[5].value is None:
                     continue
                 for cell in row:
+                    print(cell.value)
                     row_data.append(str(cell.value))
 
                 excel_data.append(row_data)
@@ -42,7 +44,7 @@ def upload(request):
         if request.session.get('excel_data'):
             excel_data = request.session.get('excel_data')
             for i in range(len(excel_data)):
-                excel_data[i] = excel_data[i][0:2] + excel_data[i][33:40]
+                excel_data[i] = excel_data[i][0:2] + excel_data[i][2:9]
             # request.session.clear()
             page = request.GET.get('page', 1)
 
@@ -60,16 +62,16 @@ def upload(request):
 
 def generate(request):
     excel_data = request.session.get('excel_data')
-
-    g_rate      = excel_data[0][41]
-    m_rate      = excel_data[0][42]
-    dahi_rate   = excel_data[0][43]
-    ghee_rate   = excel_data[0][44]
-    bill_for    = excel_data[0][45]
-    bill_gen    = excel_data[0][46]
+    print(excel_data)
+    g_rate      = excel_data[0][10]
+    m_rate      = excel_data[0][11]
+    dahi_rate   = excel_data[0][12]
+    ghee_rate   = excel_data[0][13]
+    bill_for    = excel_data[0][14]
+    bill_gen    = excel_data[0][15]
 
     for i in range(len(excel_data)):
-        excel_data[i] = excel_data[i][0:2] + excel_data[i][33:40]
+        excel_data[i] = excel_data[i][0:2] + excel_data[i][2:9]
 
     file_name = today.strftime('%B') + '_' + today.strftime('%Y')
     
