@@ -1,10 +1,15 @@
+import encodings
 from django.shortcuts import render, redirect
-from .models import Upload, UploadForm
+from .models import Upload, UploadForm, SingleBillForm, Rate, RateForm
 from django.contrib import messages
 from openpyxl import load_workbook
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from xlsxwriter.workbook import Workbook
 from django.conf import settings
+from django.http import HttpResponse
+from django.template.loader import render_to_string, get_template
+from xhtml2pdf import pisa
+import io
 import os, datetime
 import random, string
 from pathlib import Path
@@ -13,6 +18,42 @@ def get_random_text():
     return ''.join(random.sample(string.ascii_letters, 6))
 
 today = datetime.datetime.now()
+
+def generate_single_bill(request):
+    rates = Rate.objects.get(id=1)
+    if request.method == 'POST':
+        pass
+    form = SingleBillForm()
+    template = get_template('single_bill.html')
+    html = template.render({'form': form, 'rates': rates})
+    # rendered = render_to_string('single_bill.html', {'form': form, 'rates': rates})
+    result = io.BytesIO()
+    pdf = pisa.pisaDocument(io.BytesIO(html.encode('utf-8')), result, encoding='UTF-8')
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    # return HttpResponse(html)
+    # pdf = PDF()
+    # pdf.set_font_size(16)
+    # pdf.add_page()
+    # pdf.write_html(rendered, table_line_separators=True)
+    # response = HttpResponse(pdf, content_type='application/pdf')
+    # response['Content-Disposition'] = "attachment; filename='file_name.pdf'"
+    # return response
+    # return render(request, 'single_bill.html', {'form': form, 'rates': rates})
+
+def rates(request):
+    rates = Rate.objects.get(id=1)
+    if request.method == 'POST':
+        form = RateForm(request.POST, instance=rates)
+        form.save()
+        messages.success(request, 'Rates updated')
+    form = RateForm(initial={
+        'cow_milk_rate': rates.cow_milk_rate,
+        'milk_rate': rates.milk_rate,
+        'ghee_rate': rates.ghee_rate,
+        'dahi_rate': rates.dahi_rate
+    })
+    return render(request, 'rates.html', {'form': form})
 
 def upload(request):
     if request.method == 'POST':
@@ -61,6 +102,7 @@ def upload(request):
     return render(request, 'upload.html', {'form': form})
 
 def generate(request):
+    output = io.BytesIO()
     excel_data = request.session.get('excel_data')
     print(excel_data)
     g_rate      = excel_data[0][10]
@@ -76,20 +118,22 @@ def generate(request):
     file_name = today.strftime('%B') + '_' + today.strftime('%Y')
     
     # Check if the dir already exists
-    try:
-        os.makedirs(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/')))
-    except FileExistsError:
-        pass
+    # try:
+    #     os.makedirs(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/')))
+    # except FileExistsError:
+    #     pass
 
-    check_file = Path(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
+    # check_file = Path(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
 
-    # check if file already exists
-    if check_file.exists():
-        book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '_' + get_random_text() + '.xlsx'))
-        sheet = book.add_worksheet('Sheet1')
-    else:
-        book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
-        sheet = book.add_worksheet('Sheet1')
+    # # check if file already exists
+    # if check_file.exists():
+    #     book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '_' + get_random_text() + '.xlsx'))
+    #     sheet = book.add_worksheet('Sheet1')
+    # else:
+    #     book = Workbook(os.path.join(settings.MEDIA_ROOT, today.strftime('bills/%Y/%B/'), file_name + '.xlsx'))
+    #     sheet = book.add_worksheet('Sheet1')
+    book = Workbook(output, {'in_memory': True})
+    sheet = book.add_worksheet('Sheet1')
 
     for col in range(1000):
         sheet.set_column(col, col, 8)
@@ -730,6 +774,13 @@ def generate(request):
         except IndexError:
             break
         
+    book.close()
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = "attachment; filename=" + today.strftime('bills/%Y/%B/') + ".xlsx"
+
+    output.close()
     messages.info(request, 'File generated successfully')
     request.session.clear()
-    return redirect('upload')
+    
+    return response

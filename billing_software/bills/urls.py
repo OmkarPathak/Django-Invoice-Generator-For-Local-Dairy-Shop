@@ -18,4 +18,6 @@ from . import views
 urlpatterns = [
     path('upload/', views.upload, name='upload'),
     path('generate/', views.generate, name='generate'),
+    path('bill/', views.generate_single_bill, name='bill'),
+    path('rates/', views.rates, name='rates'),
 ]

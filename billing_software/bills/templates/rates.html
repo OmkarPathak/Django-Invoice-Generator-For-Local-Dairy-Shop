@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Update Rates{% endblock %}
+
+{% block content %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12"></div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+            {% include 'messages.html' %}
+            <form action="{% url 'rates' %}" method="POST">
+                {% csrf_token %}
+                {{ form.media }}
+                {% for field in form %}
+                <div class="form-group">
+                    {{ field | as_crispy_field }}
+                </div>
+                {% endfor %}  
+                <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock%}

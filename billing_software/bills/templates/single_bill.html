@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style>
+table {
+    width:100%;
+}
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 25%;
+    text-align: left;
+   
+}
+table#t01 tr:nth-child(even) {
+    background-color: #eee;
+}
+table#t01 tr:nth-child(odd) {
+   background-color: #fff;
+}
+/* table#t01 th {
+    background-color: black;
+    color: white;
+} */
+body{
+    font-size: 12px;
+}
+
+.span{
+  display: block; 
+  clear:both;
+}
+
+.left{
+  /* float: left; */
+  /* display: inline-block; */
+}
+
+.right{
+  /* float: right; */
+  /* display: inline-block; */
+  margin-left: 80%;
+}
+</style>
+</head>
+<body>
+    <table class="table table-striped table-bordered" id="single-bill-form">
+        <thead class="thead-dark text-center">
+            <!-- <tr>
+                <th>मातृछाया दुग्धालय 210, कसबा पेठ, पुणे-411011</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr> -->
+            <tr>
+                <th width="25%">तपशील</th>
+                <th>प्रमाण</th>
+                <th>दर</th>
+                <th>रक्कम</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>म्हशींचे दूध</td>
+                <td>{{ form.milk_quantity }}</td>
+                <td class="text-center">{{ rates.milk_rate }}/ltr</td>
+                <td>{{ form.milk_cost }}</td>
+            </tr>
+
+
+            <tr>
+                <td>गायीचे दूध</td>
+                <td>{{ form.cow_milk_quantity }}</td>
+                <td class="text-center">{{ rates.cow_milk_rate }}/ltr</td>
+                <td>{{ form.cow_milk_cost }}</td>
+            </tr>
+
+            <tr>
+                <td>दही</td>
+                <td></td>
+                <td class="text-center">{{ rates.dahi_rate }}/ltr</td>
+                <td>{{ form.dahi_cost }}</td>
+            </tr>
+
+            <tr>
+                <td>तूप</td>
+                <td></td>
+                <td class="text-center">{{ rates.ghee_rate }}/ltr</td>
+                <td>{{ form.ghee_cost }}</td>
+            </tr>
+
+            <tr>
+                <td>मागील बाकी</td>
+                <td></td>
+                <td></td>
+                <td>{{ form.last_month_due }}</td>
+            </tr>
+
+            <tr>
+                <td>एकूण</td>
+                <td></td>
+                <td></td>
+                <td>{{ form.total }}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
