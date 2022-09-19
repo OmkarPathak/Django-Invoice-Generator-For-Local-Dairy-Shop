@@ -23,9 +23,9 @@
                     <li class="nav-item {% if request.resolver_match.url_name == 'upload' %} active {% endif %}">
                         <a class="nav-link" href="{% url 'upload'%}">Upload</a>
                     </li>
-                    <li class="nav-item {% if request.resolver_match.url_name == 'bill' %} active {% endif %}">
+                    <!-- <li class="nav-item {% if request.resolver_match.url_name == 'bill' %} active {% endif %}">
                         <a class="nav-link" href="{% url 'bill'%}">Generate Single Bill</a>
-                    </li>
+                    </li> -->
                     <li class="nav-item {% if request.resolver_match.url_name == 'rates' %} active {% endif %}">
                         <a class="nav-link" href="{% url 'rates'%}">Rates</a>
                     </li>

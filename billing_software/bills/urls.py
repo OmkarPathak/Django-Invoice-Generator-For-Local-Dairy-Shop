@@ -20,4 +20,5 @@ urlpatterns = [
     path('generate/', views.generate, name='generate'),
     path('bill/', views.generate_single_bill, name='bill'),
     path('rates/', views.rates, name='rates'),
+    path('', views.upload, name='upload'),
 ]
