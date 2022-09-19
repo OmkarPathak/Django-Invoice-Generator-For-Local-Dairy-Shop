@@ -17,6 +17,7 @@ class Rate(models.Model):
     milk_rate = models.CharField("म्हशींचे दूध /ltr", max_length=10)
     dahi_rate = models.CharField("दही /kg", max_length=10)
     ghee_rate = models.CharField("तूप /kg", max_length=10)
+    updated = models.DateTimeField(auto_now_add=True) 
     
 class RateForm(forms.ModelForm):
     class Meta:

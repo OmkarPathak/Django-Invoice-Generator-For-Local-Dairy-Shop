@@ -69,11 +69,11 @@ def upload(request):
             # # getting value from each cell in row
             for row in wb['Sheet1'].iter_rows():
                 row_data = list()
-                print(row)
+                # print(row)
                 if not row[0].value and row[5].value is None:
                     continue
                 for cell in row:
-                    print(cell.value)
+                    # print(cell.value)
                     row_data.append(str(cell.value))
 
                 excel_data.append(row_data)
@@ -104,11 +104,13 @@ def upload(request):
 def generate(request):
     output = io.BytesIO()
     excel_data = request.session.get('excel_data')
-    print(excel_data)
-    g_rate      = excel_data[0][10]
-    m_rate      = excel_data[0][11]
-    dahi_rate   = excel_data[0][12]
-    ghee_rate   = excel_data[0][13]
+    # print(excel_data)
+    rates = Rate.objects.get()
+    # print('COW milk:', rates.cow_milk_rate, rates.milk_rate)
+    g_rate      = rates.cow_milk_rate
+    m_rate      = rates.milk_rate
+    dahi_rate   = rates.dahi_rate
+    ghee_rate   = rates.ghee_rate
     bill_for    = excel_data[0][14]
     bill_gen    = excel_data[0][15]
 
@@ -189,7 +191,7 @@ def generate(request):
     col = 0
     
     for i in range(0, len(excel_data), 4):
-        print(excel_data[i])
+        # print(excel_data[i])
 
         sr_no       = excel_data[i][0]
         name        = excel_data[i][1]
