@@ -126,5 +126,5 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # for uploading excel files
-MEDIA_ROOT = os.path.join('/home/omkarpathak27/Desktop', 'media')
+MEDIA_ROOT = os.path.join('/home/matruchayadugdhalay/Django-Invoice-Generator-For-Local-Dairy-Shop/billing_software', 'media')
 MEDIA_URL = '/media/'
