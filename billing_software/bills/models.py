@@ -11,12 +11,17 @@ class UploadForm(forms.ModelForm):
         model  = Upload
         fields = '__all__'
 
+
+class DateInput(forms.DateInput):
+    input_type = 'date'
+
 class Rate(models.Model):
     id = models.AutoField(primary_key=True)
-    cow_milk_rate = models.CharField("गायीचे दूध /ltr", max_length=10)
-    milk_rate = models.CharField("म्हशींचे दूध /ltr", max_length=10)
-    dahi_rate = models.CharField("दही /kg", max_length=10)
-    ghee_rate = models.CharField("तूप /kg", max_length=10)
+    # cow_milk_rate = models.CharField("गायीचे दूध /ltr", max_length=10)
+    # milk_rate = models.CharField("म्हशींचे दूध /ltr", max_length=10)
+    # dahi_rate = models.CharField("दही /kg", max_length=10)
+    # ghee_rate = models.CharField("तूप /kg", max_length=10)
+    rate_updated = models.DateField('Rate Updated From', null=True, blank=True)
     updated = models.DateTimeField(auto_now_add=True) 
     
 class RateForm(forms.ModelForm):
@@ -24,6 +29,9 @@ class RateForm(forms.ModelForm):
         model  = Rate
         fields = '__all__'
         exclude = ['id']
+        widgets = {
+            'rate_updated': DateInput(),
+        }
     
 class SingleBillForm(forms.Form):  
     cow_milk_quantity = forms.CharField(max_length=50)  

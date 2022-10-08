@@ -48,10 +48,11 @@ def rates(request):
         form.save()
         messages.success(request, 'Rates updated')
     form = RateForm(initial={
-        'cow_milk_rate': rates.cow_milk_rate,
-        'milk_rate': rates.milk_rate,
-        'ghee_rate': rates.ghee_rate,
-        'dahi_rate': rates.dahi_rate
+        # 'cow_milk_rate': rates.cow_milk_rate,
+        # 'milk_rate': rates.milk_rate,
+        # 'ghee_rate': rates.ghee_rate,
+        # 'dahi_rate': rates.dahi_rate
+        'rate_updated': rates.rate_updated
     })
     return render(request, 'rates.html', {'form': form})
 
@@ -107,10 +108,10 @@ def generate(request):
     # print(excel_data)
     rates = Rate.objects.get()
     # print('COW milk:', rates.cow_milk_rate, rates.milk_rate)
-    g_rate      = rates.cow_milk_rate
-    m_rate      = rates.milk_rate
-    dahi_rate   = rates.dahi_rate
-    ghee_rate   = rates.ghee_rate
+    g_rate      = excel_data[0][10]
+    m_rate      = excel_data[0][11]
+    dahi_rate   = excel_data[0][12]
+    ghee_rate   = excel_data[0][13]
     bill_for    = excel_data[0][14]
     bill_gen    = excel_data[0][15]
 
@@ -136,6 +137,8 @@ def generate(request):
     #     sheet = book.add_worksheet('Sheet1')
     book = Workbook(output, {'in_memory': True})
     sheet = book.add_worksheet('Sheet1')
+    # default cell format to size 10 
+    # book.formats[0].set_font_size(12)
 
     for col in range(1000):
         sheet.set_column(col, col, 8)
@@ -182,7 +185,7 @@ def generate(request):
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
-        'font_size': 10
+        'font_size': 13
     })
 
     border = book.add_format({'border': 1})
@@ -360,9 +363,23 @@ def generate(request):
             data
         )
 
-        # A10:C10
+        # A11:C11
+        if rates.rate_updated:
+            sheet.merge_range(
+                'A' + str(row + 11) + ':C' + str(row + 11), 
+                'दि. ' + str(rates.rate_updated.strftime('%d/%m/%Y')) + ' पासून', 
+                data
+            )
+        else:
+            sheet.merge_range(
+                'A' + str(row + 11) + ':C' + str(row + 11), 
+                'दि. / / पासून', 
+                data
+            )
+
+        # A12:C12
         sheet.merge_range(
-            'A' + str(row + 11) + ':C' + str(row + 11), 
+            'A' + str(row + 12) + ':C' + str(row + 12), 
             'एकूण', 
             data
         )
@@ -379,9 +396,21 @@ def generate(request):
         # F11
         sheet.write('F' + str(row + 11), round(float(total), 2), data)
 
-        # A11:F12
+        # D11
+        sheet.write_blank('D' + str(row + 11), '', data)
+
+        # E11 (get date here)
+        sheet.write('E' + str(row + 11), '', data)
+
+        # F11
+        sheet.write_blank('F' + str(row + 11), '', data)
+
+        # F12
+        sheet.write('L' + str(row + 12), round(float(total), 2), data)
+
+        # A12:C13
         sheet.merge_range(
-            'A' + str(row + 12) + ':F' + str(row + 13), 
+            'A' + str(row + 13) + ':F' + str(row + 14), 
             'प्राप्तकर्त्याची स्वाक्षरी', 
             sign
         )
@@ -554,8 +583,22 @@ def generate(request):
             )
 
             # G11:I11
+            if rates.rate_updated:
+                sheet.merge_range(
+                    'G' + str(row + 11) + ':I' + str(row + 11), 
+                    'दि. ' + str(rates.rate_updated.strftime('%d/%m/%Y')) + ' पासून', 
+                    data
+                )
+            else:
+                sheet.merge_range(
+                    'G' + str(row + 11) + ':I' + str(row + 11), 
+                    'दि. / / पासून', 
+                    data
+                )
+
+            # G12:I12
             sheet.merge_range(
-                'G' + str(row + 11) + ':I' + str(row + 11), 
+                'G' + str(row + 12) + ':I' + str(row + 12), 
                 'एकूण', 
                 data
             )
@@ -569,12 +612,21 @@ def generate(request):
             # L10
             sheet.write('L' + str(row + 10), previous_blnc, data)
 
+            # J11
+            sheet.write_blank('J' + str(row + 11), '', data)
+
+            # K11 (get date here)
+            sheet.write_blank('K' + str(row + 11), '', data)
+
             # L11
-            sheet.write('L' + str(row + 11), round(float(total), 2), data)
+            sheet.write_blank('K' + str(row + 11), '', data)
+
+            # L12
+            sheet.write('L' + str(row + 12), round(float(total), 2), data)
 
             # G11:L12
             sheet.merge_range(
-                'G' + str(row + 12) + ':L' + str(row + 13), 
+                'G' + str(row + 13) + ':L' + str(row + 14), 
                 'प्राप्तकर्त्याची स्वाक्षरी', 
                 sign
             )
@@ -772,7 +824,7 @@ def generate(request):
             #     sign
             # )
 
-            row += 13
+            row += 14
         except IndexError:
             break
         
