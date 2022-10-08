@@ -394,7 +394,7 @@ def generate(request):
         sheet.write('F' + str(row + 10), previous_blnc, data)
 
         # F11
-        sheet.write('F' + str(row + 11), round(float(total), 2), data)
+        sheet.write('F' + str(row + 12), round(float(total), 2), data)
 
         # D11
         sheet.write_blank('D' + str(row + 11), '', data)
@@ -619,7 +619,7 @@ def generate(request):
             sheet.write_blank('K' + str(row + 11), '', data)
 
             # L11
-            sheet.write_blank('K' + str(row + 11), '', data)
+            sheet.write_blank('L' + str(row + 11), '', data)
 
             # L12
             sheet.write('L' + str(row + 12), round(float(total), 2), data)
