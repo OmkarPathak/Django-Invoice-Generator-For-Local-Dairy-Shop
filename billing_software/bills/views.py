@@ -185,7 +185,7 @@ def generate(request):
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
-        'font_size': 13
+        'font_size': 10
     })
 
     border = book.add_format({'border': 1})
