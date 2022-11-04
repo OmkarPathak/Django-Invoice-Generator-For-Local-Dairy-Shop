@@ -137,6 +137,9 @@ def generate(request):
     #     sheet = book.add_worksheet('Sheet1')
     book = Workbook(output, {'in_memory': True})
     sheet = book.add_worksheet('Sheet1')
+    sheet.set_landscape()
+    sheet.set_paper(9)
+    sheet.set_h_pagebreaks([i for i in range(28, 1000, 28)])
     # default cell format to size 10 
     # book.formats[0].set_font_size(12)
 
