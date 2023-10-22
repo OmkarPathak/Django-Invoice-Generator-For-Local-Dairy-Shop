@@ -137,6 +137,8 @@ def generate(request):
     #     sheet = book.add_worksheet('Sheet1')
     book = Workbook(output, {'in_memory': True})
     sheet = book.add_worksheet('Sheet1')
+    sheet.set_paper(9)
+    sheet.set_print_scale(85)
     # default cell format to size 10 
     # book.formats[0].set_font_size(12)
 
@@ -192,6 +194,8 @@ def generate(request):
     
     row = 0
     col = 0
+    page_breaks_list = []
+    page_break_counter = 0
     
     for i in range(0, len(excel_data), 4):
         # print(excel_data[i])
@@ -225,7 +229,7 @@ def generate(request):
             'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
             heading)
 
-        sheet.set_row(1, 30)
+        sheet.set_row(row + 1, 30)
 
         # A3:F3
         sheet.merge_range(
@@ -446,6 +450,7 @@ def generate(request):
                 'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
                 heading)
 
+            sheet.set_row(row + 1, 30)
             # G3:L3
             sheet.merge_range(
                 'G' + str(row + 3) + ':L' + str(row + 3), 
@@ -824,10 +829,14 @@ def generate(request):
             #     sign
             # )
 
+            page_break_counter += 28
+            page_breaks_list.append(page_break_counter)
+            
             row += 14
         except IndexError:
             break
-        
+
+    sheet.set_h_pagebreaks(page_breaks_list)  
     book.close()
     output.seek(0)
     response = HttpResponse(output.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
