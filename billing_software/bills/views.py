@@ -143,8 +143,8 @@ def generate(request):
     # book.formats[0].set_font_size(12)
 
     for col in range(1000):
-        sheet.set_column(col, col, 8)
-        sheet.set_row(col, 25)
+        sheet.set_column(col, col, 7)
+        sheet.set_row(col, 22)
 
     merge_format = book.add_format({
         'bold': 3,
@@ -180,14 +180,14 @@ def generate(request):
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
-        'font_size': 12
+        'font_size': 11
     })
 
     data = book.add_format({
         'border': 1,
         'align': 'center',
         'valign': 'vcenter',
-        'font_size': 13
+        'font_size': 12
     })
 
     border = book.add_format({'border': 1})
@@ -212,21 +212,22 @@ def generate(request):
 
         # E1:F1
         sheet.merge_range(
-            'E' + str(row + 1) + ':F' + str(row + 1), 
+            'D' + str(row + 1) + ':F' + str(row + 1), 
             'फोन: 9371079745', 
             data
         )
 
-        # C1:D1
-        sheet.merge_range(
-            'C' + str(row + 1) + ':D' + str(row + 1), 
-            '', 
-            merge_format)
+        # C1:C1
+        # sheet.merge_range(
+        #     'C' + str(row + 1) + ':C' + str(row + 1), 
+        #     '', 
+        #     merge_format)
+        sheet.write('C' + str(row + 1), '', data)
 
         # A2:F2
         sheet.merge_range(
             'A' + str(row + 2) + ':F' + str(row + 2), 
-            'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
+            'मातृछाया दुग्धालय 210, कसबा पेठ, पुणे-411011', 
             heading)
 
         sheet.set_row(row + 1, 30)
@@ -433,21 +434,22 @@ def generate(request):
 
             # K1:L1
             sheet.merge_range(
-                'K' + str(row + 1) + ':L' + str(row + 1), 
+                'J' + str(row + 1) + ':L' + str(row + 1), 
                 'फोन: 9371079745', 
                 data
             )
 
-            # I1:J1
-            sheet.merge_range(
-                'I' + str(row + 1) + ':J' + str(row + 1), 
-                '', 
-                merge_format)
+            # I1:I1
+            # sheet.merge_range(
+            #     'I' + str(row + 1) + ':I' + str(row + 1), 
+            #     '', 
+            #     merge_format)
+            sheet.write('I' + str(row + 1), '', data)
 
             # G2:L2
             sheet.merge_range(
                 'G' + str(row + 2) + ':L' + str(row + 2), 
-                'मातृछाया दुग्धालय\n 210, कसबा पेठ, पुणे-411011', 
+                'मातृछाया दुग्धालय 210, कसबा पेठ, पुणे-411011', 
                 heading)
 
             sheet.set_row(row + 1, 30)
