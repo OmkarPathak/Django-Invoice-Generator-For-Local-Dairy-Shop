@@ -137,8 +137,6 @@ def generate(request):
     #     sheet = book.add_worksheet('Sheet1')
     book = Workbook(output, {'in_memory': True})
     sheet = book.add_worksheet('Sheet1')
-    sheet.set_paper(9)
-    sheet.set_print_scale(85)
     # default cell format to size 10 
     # book.formats[0].set_font_size(12)
 
